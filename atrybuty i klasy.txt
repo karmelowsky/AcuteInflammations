@@ -1,0 +1,8 @@
+a1 temperatura pacjenta 35 - 42 - ciagle
+a2 Wystepowanie nudnosci {tak, nie}
+a3 Bol ledzwiowy {tak, nie}
+a4 Pchanie moczu (ciagla potrzeba oddawania moczu) {tak, nie}
+a5 Bole mikcji {tak, nie}
+a6 Palenie cewki moczowej, swiadu, obrzek ujscia cewki moczowej {tak, nie}
+decyzja d1: Zapalenie pecherza moczowego {tak, nie}
+decyzja d2: Zapalenie nerek pochodzenia miedniczek nerkowych {tak, nie}
