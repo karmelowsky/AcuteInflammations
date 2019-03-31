@@ -1,10 +1,9 @@
 from operator import itemgetter
-
+from sklearn.model_selection import train_test_split
 import numpy as np
 from scipy.stats.stats import pearsonr
-
-from myFunctions import crossValidation
-from myFunctions import crossValidationWithScaling
+from numpy import zeros
+from myFunctions import cv2
 
 #region GetData
 
@@ -57,66 +56,113 @@ bestAttributes2 = np.ravel(np.array(sortedCorrelations2)[:, 0]).astype(int)
 ###################KNN
 print("\n###ALGORYTM KNN###\n")
 ###################klasa 1
-y = npArray[:, 6]
 
+results = zeros([5, 11, len(bestAttributes1)])
+
+
+X = npArray[:, 0:6]
+y = npArray[:, 6]
 print("Zapalenie pecherza moczowego poprawnosc klasyfikacji:")
 
-print("Dane nieznormalizowane")
-#region NonNormalized
-print("\nMetryka euclidean")
-for k in [1, 5, 10]:
-    print("\n{}-NN".format(k))
-    for i in range(0, 6):
-        X = npArray[:, bestAttributes1[0:i + 1]]
-        print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k)))
+kValues = [1, 5, 10]
 
-print("\nMetryka manhattan")
-for k in [1, 5, 10]:
-    print("\n{}-NN".format(k))
-    for i in range(0, 6):
-        X = npArray[:, bestAttributes1[0:i + 1]]
-        print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k, metric='manhattan')))
-#endregion
+for testCount in range(5):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5)
 
-print("Dane znormalizowane:")
-#region Normalized
-print("\nMetryka euclidean")
-for k in [1, 5, 10]:
-    print("\n{}-NN".format(k))
-    for i in range(0, 6):
-        X = npArray[:, bestAttributes1[0:i + 1]]
-        print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidationWithScaling(X, y, count=5, kneigbors=k)))
+    for k in kValues:
 
-print("\nMetryka manhattan")
-for k in [1, 5, 10]:
-    print("\n{}-NN".format(k))
-    for i in range(0, 6):
-        X = npArray[:, bestAttributes1[0:i + 1]]
-        print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidationWithScaling(X, y, count=5, kneigbors=k, metric='manhattan')))
-#endregion
+        for atrIndex in range(0, len(bestAttributes1)):
+            score = cv2(X_train[:, bestAttributes1[0:atrIndex+1]], X_test[:, bestAttributes1[0:atrIndex+1]], y_train, y_test, kneighbors=k)
+            results[testCount][k][atrIndex] = score
+
+#print(results)
+
+for k in kValues:
+    print("\nK: {}".format(k))
+
+    for atrIndex in range(0, len(bestAttributes1)):
+        print("{} atrybutow: {}".format(atrIndex+1, results[:,k, atrIndex].mean()))
 
 
-###################klasa 2
-y = npArray[:, 7]
+#mean = results[:, 1, 1]
+#print(mean)
 
-print("\n")
-print("Zapalenie nerek pochodzenia miedniczek nerkowych poprawnosc klasyfikacji:\n")
 
-print("\nMetryka euclidean")
 
-for k in [1, 5, 10]:
-    print("\n{}-NN".format(k))
-    for i in range(0, 6):
-        X = npArray[:, bestAttributes2[0:i + 1]]
-        print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k)))
 
-print("\nMetryka manhattan")
-
-for k in [1, 5, 10]:
-    print("\n{}-NN".format(k))
-    for i in range(0, 6):
-        X = npArray[:, bestAttributes2[0:i + 1]]
-        print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k, metric='manhattan')))
-
-###################NM
-print("\n###ALGORYTM NM###\n")
+#
+# print("Dane nieznormalizowane")
+# #region NonNormalized
+# print("\nMetryka euclidean")
+# for k in [1, 5, 10]:
+#     print("\n{}-NN".format(k))
+#     for i in range(0, 6):
+#         X = npArray[:, bestAttributes1[0:i + 1]]
+#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k)))
+#
+# print("\nMetryka manhattan")
+# for k in [1, 5, 10]:
+#     print("\n{}-NN".format(k))
+#     for i in range(0, 6):
+#         X = npArray[:, bestAttributes1[0:i + 1]]
+#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k, metric='manhattan')))
+# #endregion
+#
+# print("Dane znormalizowane:")
+# #region Normalized
+# print("\nMetryka euclidean")
+# for k in [1, 5, 10]:
+#     print("\n{}-NN".format(k))
+#     for i in range(0, 6):
+#         X = npArray[:, bestAttributes1[0:i + 1]]
+#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidationWithScaling(X, y, count=5, kneigbors=k)))
+#
+# print("\nMetryka manhattan")
+# for k in [1, 5, 10]:
+#     print("\n{}-NN".format(k))
+#     for i in range(0, 6):
+#         X = npArray[:, bestAttributes1[0:i + 1]]
+#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidationWithScaling(X, y, count=5, kneigbors=k, metric='manhattan')))
+# #endregion
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+# ###################klasa 2
+# y = npArray[:, 7]
+#
+# print("\n")
+# print("Zapalenie nerek pochodzenia miedniczek nerkowych poprawnosc klasyfikacji:\n")
+#
+# print("\nMetryka euclidean")
+#
+# for k in [1, 5, 10]:
+#     print("\n{}-NN".format(k))
+#     for i in range(0, 6):
+#         X = npArray[:, bestAttributes2[0:i + 1]]
+#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k)))
+#
+# print("\nMetryka manhattan")
+#
+# for k in [1, 5, 10]:
+#     print("\n{}-NN".format(k))
+#     for i in range(0, 6):
+#         X = npArray[:, bestAttributes2[0:i + 1]]
+#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k, metric='manhattan')))
+#
+# ###################NM
+# print("\n###ALGORYTM NM###\n")
