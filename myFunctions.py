@@ -2,8 +2,9 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import preprocessing
+from sklearn.neighbors import NearestCentroid
 
-def cv2(X_train, X_test, y_train, y_test, kneighbors, metric = 'euclidean'):
+def cv2NN(X_train, X_test, y_train, y_test, kneighbors, metric ='euclidean'):
 
     knn = KNeighborsClassifier(n_neighbors=kneighbors, metric=metric)
     knn.fit(X_train, y_train)
@@ -16,6 +17,19 @@ def cv2(X_train, X_test, y_train, y_test, kneighbors, metric = 'euclidean'):
     score2 = accuracy_score(y_train, pred)
 
     return (score2+score1)/2
+
+def cv2NM(X_train, X_test, y_train, y_test, metric = 'euclidean'):
+
+    nm = NearestCentroid(metric=metric)
+    nm.fit(X_train, y_train)
+    pred = nm.predict(X_test)
+    score1 = accuracy_score(y_test, pred)
+
+    nm = NearestCentroid(metric=metric)
+    nm.fit(X_test, y_test)
+    pred = nm.predict(X_train)
+    score2 = accuracy_score(y_train, pred)
+    return (score2 + score1) / 2
 
 def crossValidation(X_train, X_test, y_train, y_test, count, kneigbors=3, metric='euclidean'):
     scores = []

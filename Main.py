@@ -3,7 +3,8 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from scipy.stats.stats import pearsonr
 from numpy import zeros
-from myFunctions import cv2
+from myFunctions import cv2NN
+from myFunctions import cv2NM
 
 #region GetData
 
@@ -57,31 +58,49 @@ bestAttributes2 = np.ravel(np.array(sortedCorrelations2)[:, 0]).astype(int)
 print("\n###ALGORYTM KNN###\n")
 ###################klasa 1
 
-results = zeros([5, 11, len(bestAttributes1)])
+#array dimemnsions : test, k-nn value, featureCount, metrics
+results = zeros([5, 11, len(bestAttributes1), 2])
 
+#                #testCount, featureCount, metrics
+resultsNM = zeros([5, len(bestAttributes1), 2])
+metrics = ['euclidean', 'manhattan']
 
 X = npArray[:, 0:6]
 y = npArray[:, 6]
 print("Zapalenie pecherza moczowego poprawnosc klasyfikacji:")
+
 
 kValues = [1, 5, 10]
 
 for testCount in range(5):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5)
 
+    for metricIndex in [0,1]:
+        for atrIndex in range(0, len(bestAttributes1)):
+
+            score = cv2NM(X_train[:, bestAttributes1[0:atrIndex + 1]], X_test[:, bestAttributes1[0:atrIndex + 1]], y_train, y_test, metric=metrics[metricIndex])
+            resultsNM[testCount][atrIndex][metricIndex] = score
+
+            for k in kValues:
+                score = cv2NN(X_train[:, bestAttributes1[0:atrIndex + 1]], X_test[:, bestAttributes1[0:atrIndex + 1]], y_train, y_test, kneighbors=k, metric=metrics[metricIndex])
+                results[testCount][k][atrIndex][metricIndex] = score
+
+#print(resultsNM) #macierz wynikow
+
+
+for metricIndex in [0,1]:
+    print("\nMetryka: {}".format(metrics[metricIndex]))
     for k in kValues:
+        print("\nK: {}".format(k))
 
         for atrIndex in range(0, len(bestAttributes1)):
-            score = cv2(X_train[:, bestAttributes1[0:atrIndex+1]], X_test[:, bestAttributes1[0:atrIndex+1]], y_train, y_test, kneighbors=k)
-            results[testCount][k][atrIndex] = score
+            print("{} atrybutow: {}".format(atrIndex+1, results[:,k, atrIndex, metricIndex].mean()))
 
-#print(results)
-
-for k in kValues:
-    print("\nK: {}".format(k))
-
+print("\n Algorytm NM")
+for metricIndex in [0,1]:
+    print("\nMetryka: {}".format(metrics[metricIndex]))
     for atrIndex in range(0, len(bestAttributes1)):
-        print("{} atrybutow: {}".format(atrIndex+1, results[:,k, atrIndex].mean()))
+        print("{} atrybutow: {}".format(atrIndex+1, resultsNM[:, atrIndex, metricIndex].mean()))
 
 
 #mean = results[:, 1, 1]
