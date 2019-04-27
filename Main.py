@@ -8,21 +8,19 @@ from myFunctions import cv2NM
 
 #region GetData
 
-with open('i.txt') as f:
+with open('i.csv') as f:
     lines = f.readlines()
 
 formattedList = []
 for line in lines:
-    formattedList.append(line.split())
+    formattedList.append(line.split(';'))
 
 converted = []
 counter = 0
 for fl in formattedList:
     converted.append(
         [float(fl[0]), fl[1] == 'yes', fl[2] == 'yes', fl[3] == 'yes', fl[4] == 'yes', fl[5] == 'yes', fl[6] == 'yes',
-         fl[7] == 'yes'])
-    if fl[7] == 'yes':
-        counter = counter + 1
+         fl[7] == 'yes', int(fl[8])])
 
 npArray = np.array(converted)
 
@@ -58,21 +56,23 @@ bestAttributes2 = np.ravel(np.array(sortedCorrelations2)[:, 0]).astype(int)
 print("\n###ALGORYTM KNN###\n")
 ###################klasa 1
 
+howmanytimes = 100
+
 #array dimemnsions : test, k-nn value, featureCount, metrics
-results = zeros([5, 11, len(bestAttributes1), 2])
+results = zeros([howmanytimes, 11, len(bestAttributes1), 2])
 
 #                #testCount, featureCount, metrics
-resultsNM = zeros([5, len(bestAttributes1), 2])
+resultsNM = zeros([howmanytimes, len(bestAttributes1), 2])
 metrics = ['euclidean', 'manhattan']
 
 X = npArray[:, 0:6]
-y = npArray[:, 6]
+y = npArray[:, 8]
 print("Zapalenie pecherza moczowego poprawnosc klasyfikacji:")
 
 
 kValues = [1, 5, 10]
 
-for testCount in range(5):
+for testCount in range(howmanytimes):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5)
 
     for metricIndex in [0,1]:
