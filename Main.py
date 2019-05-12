@@ -1,10 +1,13 @@
 from operator import itemgetter
 from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import RFE
 import numpy as np
 from scipy.stats.stats import pearsonr
 from numpy import zeros
 from myFunctions import cv2NN
 from myFunctions import cv2NM
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
 
 #region GetData
 
@@ -28,27 +31,25 @@ npArray = np.array(converted)
 
 #region GetBestFeatures
 correlations = []
-correlations2 = []
 
 for i in range(6):
-    corr, _ = pearsonr(npArray[:, i], npArray[:, 6])
+    corr, _ = pearsonr(npArray[:, i], npArray[:, 8])
     correlations.append([i, corr.__abs__()])
-
-    corr, _ = pearsonr(npArray[:, i], npArray[:, 7])
-    correlations2.append([i, corr.__abs__()])
 
 npCorrelations = np.array(correlations)
 sortedCorrelations = sorted(npCorrelations, key=itemgetter(1), reverse=True)
-print("\nKorelacja cech z decyzja zapelenie pecherza moczowego: ")
+print("\nKorelacja cech z decyzja: ")
 print(np.array(sortedCorrelations))
 
-npCorrelations2 = np.array(correlations2)
-sortedCorrelations2 = sorted(npCorrelations2, key=itemgetter(1), reverse=True)
-print("\nKorelacja cech z decyzja zapalenie nerek pochodzenia miedniczek nerkowych: ")
-print(np.array(sortedCorrelations2))
-
 bestAttributes1 = np.ravel(np.array(sortedCorrelations)[:, 0]).astype(int)
-bestAttributes2 = np.ravel(np.array(sortedCorrelations2)[:, 0]).astype(int)
+
+chi2Features = SelectKBest(chi2, k=6)
+x_kbest_features = chi2Features.fit_transform(npArray[:,[0,1,2,3,4,5]],npArray[:, 8])
+
+print("\nPunkty cech w Chi2 test")
+print(chi2Features.scores_)
+
+bestAttributes1 = [3, 2, 4, 1, 5, 0]
 #endregion
 
 
@@ -56,21 +57,23 @@ bestAttributes2 = np.ravel(np.array(sortedCorrelations2)[:, 0]).astype(int)
 print("\n###ALGORYTM KNN###\n")
 ###################klasa 1
 
-howmanytimes = 100
+howmanytimes = 5
 
-#array dimemnsions : test, k-nn value, featureCount, metrics
-results = zeros([howmanytimes, 11, len(bestAttributes1), 2])
+#array dimemnsions : test, k-nn value, featureCount, metrics, non/normalized
+results = zeros([howmanytimes, 11, len(bestAttributes1), 2, 2])
 
 #                #testCount, featureCount, metrics
-resultsNM = zeros([howmanytimes, len(bestAttributes1), 2])
+resultsNM = zeros([howmanytimes, len(bestAttributes1), 2, 2])
 metrics = ['euclidean', 'manhattan']
 
 X = npArray[:, 0:6]
 y = npArray[:, 8]
-print("Zapalenie pecherza moczowego poprawnosc klasyfikacji:")
+print("Ostre zapalenie drog moczowych, poprawnosc klasyfikacji:")
 
 
 kValues = [1, 5, 10]
+nonNormalizedIndex = 0
+normalizedIndex = 1
 
 for testCount in range(howmanytimes):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5)
@@ -79,11 +82,17 @@ for testCount in range(howmanytimes):
         for atrIndex in range(0, len(bestAttributes1)):
 
             score = cv2NM(X_train[:, bestAttributes1[0:atrIndex + 1]], X_test[:, bestAttributes1[0:atrIndex + 1]], y_train, y_test, metric=metrics[metricIndex])
-            resultsNM[testCount][atrIndex][metricIndex] = score
+            resultsNM[testCount][atrIndex][metricIndex][nonNormalizedIndex] = score
+
+            normalizedDataScore = cv2NM(X_train[:, bestAttributes1[0:atrIndex + 1]], X_test[:, bestAttributes1[0:atrIndex + 1]], y_train, y_test, metric=metrics[metricIndex], scalling=True)
+            resultsNM[testCount][atrIndex][metricIndex][normalizedIndex] = normalizedDataScore
 
             for k in kValues:
                 score = cv2NN(X_train[:, bestAttributes1[0:atrIndex + 1]], X_test[:, bestAttributes1[0:atrIndex + 1]], y_train, y_test, kneighbors=k, metric=metrics[metricIndex])
-                results[testCount][k][atrIndex][metricIndex] = score
+                results[testCount][k][atrIndex][metricIndex][nonNormalizedIndex] = score
+
+                normalizedDataScore = cv2NN(X_train[:, bestAttributes1[0:atrIndex + 1]], X_test[:, bestAttributes1[0:atrIndex + 1]], y_train, y_test, kneighbors=k, metric=metrics[metricIndex], scalling= True)
+                results[testCount][k][atrIndex][metricIndex][normalizedIndex] = normalizedDataScore
 
 #print(resultsNM) #macierz wynikow
 
@@ -94,94 +103,11 @@ for metricIndex in [0,1]:
         print("\nK: {}".format(k))
 
         for atrIndex in range(0, len(bestAttributes1)):
-            print("{} atrybutow: {}".format(atrIndex+1, results[:,k, atrIndex, metricIndex].mean()))
+            print("{} atrybutow: {}".format(atrIndex+1, results[:,k, atrIndex, metricIndex, nonNormalizedIndex].mean()))
 
 print("\n Algorytm NM")
 for metricIndex in [0,1]:
     print("\nMetryka: {}".format(metrics[metricIndex]))
     for atrIndex in range(0, len(bestAttributes1)):
-        print("{} atrybutow: {}".format(atrIndex+1, resultsNM[:, atrIndex, metricIndex].mean()))
+        print("{} atrybutow: {}".format(atrIndex+1, resultsNM[:, atrIndex, metricIndex, nonNormalizedIndex].mean()))
 
-
-#mean = results[:, 1, 1]
-#print(mean)
-
-
-
-
-#
-# print("Dane nieznormalizowane")
-# #region NonNormalized
-# print("\nMetryka euclidean")
-# for k in [1, 5, 10]:
-#     print("\n{}-NN".format(k))
-#     for i in range(0, 6):
-#         X = npArray[:, bestAttributes1[0:i + 1]]
-#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k)))
-#
-# print("\nMetryka manhattan")
-# for k in [1, 5, 10]:
-#     print("\n{}-NN".format(k))
-#     for i in range(0, 6):
-#         X = npArray[:, bestAttributes1[0:i + 1]]
-#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k, metric='manhattan')))
-# #endregion
-#
-# print("Dane znormalizowane:")
-# #region Normalized
-# print("\nMetryka euclidean")
-# for k in [1, 5, 10]:
-#     print("\n{}-NN".format(k))
-#     for i in range(0, 6):
-#         X = npArray[:, bestAttributes1[0:i + 1]]
-#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidationWithScaling(X, y, count=5, kneigbors=k)))
-#
-# print("\nMetryka manhattan")
-# for k in [1, 5, 10]:
-#     print("\n{}-NN".format(k))
-#     for i in range(0, 6):
-#         X = npArray[:, bestAttributes1[0:i + 1]]
-#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidationWithScaling(X, y, count=5, kneigbors=k, metric='manhattan')))
-# #endregion
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-# ###################klasa 2
-# y = npArray[:, 7]
-#
-# print("\n")
-# print("Zapalenie nerek pochodzenia miedniczek nerkowych poprawnosc klasyfikacji:\n")
-#
-# print("\nMetryka euclidean")
-#
-# for k in [1, 5, 10]:
-#     print("\n{}-NN".format(k))
-#     for i in range(0, 6):
-#         X = npArray[:, bestAttributes2[0:i + 1]]
-#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k)))
-#
-# print("\nMetryka manhattan")
-#
-# for k in [1, 5, 10]:
-#     print("\n{}-NN".format(k))
-#     for i in range(0, 6):
-#         X = npArray[:, bestAttributes2[0:i + 1]]
-#         print("Liczba cech: {}. Jakosc klasyfikacji: {}".format(i + 1, crossValidation(X, y, count=5, kneigbors=k, metric='manhattan')))
-#
-# ###################NM
-# print("\n###ALGORYTM NM###\n")

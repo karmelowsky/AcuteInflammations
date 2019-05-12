@@ -4,70 +4,46 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn import preprocessing
 from sklearn.neighbors import NearestCentroid
 
-def cv2NN(X_train, X_test, y_train, y_test, kneighbors, metric ='euclidean'):
+def cv2NN(X_train, X_test, y_train, y_test, kneighbors, metric ='euclidean', scalling = False):
+
+    trainDataX = X_train
+    if scalling:
+        trainDataX = preprocessing.scale(X_train)
 
     knn = KNeighborsClassifier(n_neighbors=kneighbors, metric=metric)
-    knn.fit(X_train, y_train)
+    knn.fit(trainDataX, y_train)
     pred = knn.predict(X_test)
     score1 = accuracy_score(y_test, pred)
 
+    trainDataX = X_test
+    if scalling:
+        trainDataX = preprocessing.scale(X_test)
+
     knn = KNeighborsClassifier(n_neighbors=kneighbors, metric=metric)
-    knn.fit(X_test, y_test)
+    knn.fit(trainDataX, y_test)
     pred = knn.predict(X_train)
     score2 = accuracy_score(y_train, pred)
 
     return (score2+score1)/2
 
-def cv2NM(X_train, X_test, y_train, y_test, metric = 'euclidean'):
+def cv2NM(X_train, X_test, y_train, y_test, metric = 'euclidean', scalling = False):
+
+    trainDataX = X_train
+    if scalling:
+        trainDataX = preprocessing.scale(X_train)
 
     nm = NearestCentroid(metric=metric)
-    nm.fit(X_train, y_train)
+    nm.fit(trainDataX, y_train)
     pred = nm.predict(X_test)
     score1 = accuracy_score(y_test, pred)
 
+    trainDataX = X_test
+    if scalling:
+        trainDataX = preprocessing.scale(X_test)
+
     nm = NearestCentroid(metric=metric)
-    nm.fit(X_test, y_test)
+    nm.fit(trainDataX, y_test)
     pred = nm.predict(X_train)
     score2 = accuracy_score(y_train, pred)
     return (score2 + score1) / 2
 
-def crossValidation(X_train, X_test, y_train, y_test, count, kneigbors=3, metric='euclidean'):
-    scores = []
-    for i in range(0, count):
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5)
-
-        knn = KNeighborsClassifier(n_neighbors=kneigbors, metric=metric)
-        knn.fit(X_train, y_train)
-        pred = knn.predict(X_test)
-        score1 = accuracy_score(y_test, pred)
-        scores.append(score1)
-
-        knn = KNeighborsClassifier(n_neighbors=kneigbors, metric=metric)
-        knn.fit(X_test, y_test)
-        pred = knn.predict(X_train)
-        score2 = accuracy_score(y_train, pred)
-        scores.append(score2)
-
-    return sum(scores) / len(scores)
-
-
-def crossValidationWithScaling(X, y, count, kneigbors=3, metric='euclidean'):
-    scores = []
-    for i in range(0, 100):
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5)
-
-        scaledX = preprocessing.scale(X_train)
-        knn = KNeighborsClassifier(n_neighbors=kneigbors, metric=metric)
-        knn.fit(scaledX, y_train)
-        pred = knn.predict(X_test)
-        score1 = accuracy_score(y_test, pred)
-        scores.append(score1)
-
-        scaledX = preprocessing.scale(X_test)
-        knn = KNeighborsClassifier(n_neighbors=kneigbors, metric=metric)
-        knn.fit(scaledX, y_test)
-        pred = knn.predict(X_train)
-        score2 = accuracy_score(y_train, pred)
-        scores.append(score2)
-
-    return sum(scores) / len(scores)
