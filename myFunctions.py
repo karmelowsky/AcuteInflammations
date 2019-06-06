@@ -8,7 +8,7 @@ def cv2NN(X_train, X_test, y_train, y_test, kneighbors, metric ='euclidean', sca
 
     trainDataX = X_train
     if scalling:
-        trainDataX = preprocessing.scale(X_train)
+        trainDataX = preprocessing.minmax_scale(X_train)
 
     knn = KNeighborsClassifier(n_neighbors=kneighbors, metric=metric)
     knn.fit(trainDataX, y_train)
@@ -17,7 +17,7 @@ def cv2NN(X_train, X_test, y_train, y_test, kneighbors, metric ='euclidean', sca
 
     trainDataX = X_test
     if scalling:
-        trainDataX = preprocessing.scale(X_test)
+        trainDataX = preprocessing.minmax_scale(X_test)
 
     knn = KNeighborsClassifier(n_neighbors=kneighbors, metric=metric)
     knn.fit(trainDataX, y_test)
@@ -26,11 +26,13 @@ def cv2NN(X_train, X_test, y_train, y_test, kneighbors, metric ='euclidean', sca
 
     return (score2+score1)/2
 
-def cv2NM(X_train, X_test, y_train, y_test, metric = 'euclidean', scalling = False):
+
+
+def cv2NM(X_train, X_test, y_train, y_test, metric = 'euclidean', scalling = True):
 
     trainDataX = X_train
     if scalling:
-        trainDataX = preprocessing.scale(X_train)
+        trainDataX = preprocessing.minmax_scale(X_train)
 
     nm = NearestCentroid(metric=metric)
     nm.fit(trainDataX, y_train)
@@ -39,7 +41,7 @@ def cv2NM(X_train, X_test, y_train, y_test, metric = 'euclidean', scalling = Fal
 
     trainDataX = X_test
     if scalling:
-        trainDataX = preprocessing.scale(X_test)
+        trainDataX = preprocessing.minmax_scale(X_test)
 
     nm = NearestCentroid(metric=metric)
     nm.fit(trainDataX, y_test)

@@ -8,6 +8,7 @@ from myFunctions import cv2NN
 from myFunctions import cv2NM
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
+import statistics
 
 #region GetData
 
@@ -103,11 +104,15 @@ for metricIndex in [0,1]:
         print("\nK: {}".format(k))
 
         for atrIndex in range(0, len(bestAttributes1)):
-            print("{} atrybutow: {}".format(atrIndex+1, results[:,k, atrIndex, metricIndex, nonNormalizedIndex].mean()))
+            nnor =  results[:,k, atrIndex, metricIndex, nonNormalizedIndex]
+            nor =  results[:,k, atrIndex, metricIndex, normalizedIndex]
+            print("{} atrybutow: {}, odchylenie std. : {}, normalizowane: {}, odchylenie std. : {}".format(atrIndex+1, nnor.mean(), statistics.stdev(nnor),nor.mean(), statistics.stdev(nor)))
 
 print("\n Algorytm NM")
 for metricIndex in [0,1]:
     print("\nMetryka: {}".format(metrics[metricIndex]))
     for atrIndex in range(0, len(bestAttributes1)):
-        print("{} atrybutow: {}".format(atrIndex+1, resultsNM[:, atrIndex, metricIndex, nonNormalizedIndex].mean()))
+        nnor = resultsNM[:, atrIndex, metricIndex, nonNormalizedIndex]
+        nor = resultsNM[:, atrIndex, metricIndex, normalizedIndex]
+        print("{} atrybutow: {}, odchylenie std. : {}, normalizowane: {}, odchylenie std. : {}".format(atrIndex+1, nnor.mean(), statistics.stdev(nnor),nor.mean(), statistics.stdev(nor)))
 
